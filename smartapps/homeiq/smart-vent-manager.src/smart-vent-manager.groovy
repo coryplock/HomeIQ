@@ -1041,11 +1041,11 @@ private def getStandardImagePath() {
 }
 
 private def getHomeIQLogo() {
-   return "http://static1.squarespace.com/static/59e8f429e5dd5b22729ff616/t/5a38b58d9140b787273f8700/1513665933754/HiQ17-Logo-Type-DarkBlue.png?format=100w"
+   return "https://raw.githubusercontent.com/coryplock/HomeIQ/master/smartapps/homeiq/smart-vent-manager.src/HomeIQLogo.png"
 }
 
 private def getLargeHomeIQLogo() {
-   return "http://static1.squarespace.com/static/59e8f429e5dd5b22729ff616/t/5a38b58d9140b787273f8700/1513665933754/HiQ17-Logo-Type-DarkBlue.png"
+   return "http://static1.squarespace.com/static/59e8f429e5dd5b22729ff616/t/5a38b58d9140b787273f8700/1513665933754/HiQ17-Logo-Type-DarkBlue.png?format=100w"
 }
 
 private def getDefaultHeatSetpoint(scale)
