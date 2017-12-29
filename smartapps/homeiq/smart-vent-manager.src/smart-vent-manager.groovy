@@ -17,7 +17,7 @@ definition(
 	description: "Even better control of Smart Vents",
 	category: "My Apps",
 	iconUrl: getHomeIQLogo(),
-	iconX2Url: getHomeIQLogo()
+	iconX2Url: getLargeHomeIQLogo()
 )
 
 def get_APP_VERSION() {return "1.0"}
@@ -1042,6 +1042,10 @@ private def getStandardImagePath() {
 
 private def getHomeIQLogo() {
    return "http://static1.squarespace.com/static/59e8f429e5dd5b22729ff616/t/5a38b58d9140b787273f8700/1513665933754/HiQ17-Logo-Type-DarkBlue.png?format=100w"
+}
+
+private def getLargeHomeIQLogo() {
+   return "http://static1.squarespace.com/static/59e8f429e5dd5b22729ff616/t/5a38b58d9140b787273f8700/1513665933754/HiQ17-Logo-Type-DarkBlue.png"
 }
 
 private def getDefaultHeatSetpoint(scale)
