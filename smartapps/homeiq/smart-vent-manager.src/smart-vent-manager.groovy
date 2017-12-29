@@ -552,8 +552,7 @@ def initialize() {
 
 	subscribe(thermostat, "thermostatOperatingState", thermostatOperatingHandler)
     
-    // Disabling to test
-	//subscribe(app, appTouch)
+	subscribe(app, appTouch)
 
 	// subscribe all vents to check their temperature on a regular basis, and to allow zone settings
     
