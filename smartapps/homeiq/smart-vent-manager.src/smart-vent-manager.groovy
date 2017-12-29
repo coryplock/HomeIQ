@@ -714,6 +714,8 @@ private def adjust_vent_settings() {
 	float currentTempAtTstat =(scale=='C')?21:70
 	String mode='auto'
 
+    log.info("In adjust_vent_settings")
+
 	if (settings.thermostat) {
 		currentTempAtTstat = thermostat.currentTemperature.toFloat().round(1)
  		mode = thermostat.currentThermostatMode.toString()
@@ -722,13 +724,13 @@ private def adjust_vent_settings() {
 				heatingSetpoint = thermostat?.currentHeatingSetpoint
 			} catch (e) {
                 heatingSetpoint = (scale=='C')?22:71
-				log.debug("adjust_vent_settings>not able to get heatingSetpoint from $thermostat, exception $e")                      
+				log.error("adjust_vent_settings>not able to get heatingSetpoint from $thermostat, exception $e")                      
 			}                        
 			try {                    
 				coolingSetpoint = thermostat?.currentCoolingSetpoint
 			} catch (e) {
                 coolingSetpoint = (scale=='C')?24:75
-				log.debug("adjust_vent_settings>not able to get coolingSetpoint from $thermostat, exception $e")                      
+				log.error("adjust_vent_settings>not able to get coolingSetpoint from $thermostat, exception $e")                      
 			}                        
      }  
  
@@ -814,7 +816,7 @@ private def adjust_vent_settings() {
 				  switchLevel = 100  // Leave vents open to circulate the air
 
  				  // No need to be logging if there's nothing interesting going on
-                  //log.info("adjust_vent_settings>Thermostat in fan mode. Setting switchLevel in ${roomName} to 100")
+                  log.info("adjust_vent_settings>Thermostat in fan or idle mode. Setting switchLevel in ${roomName} to 100")
             }
              // If the thermostat is cooling		
             else if (  (mode=='cool' ||  tStatOperatingState == 'cooling' || mode=='auto') && temp_cool_diff_at_sensor > 0.0)  {
@@ -830,7 +832,7 @@ private def adjust_vent_settings() {
                   if (detailedNotif) {
                     log.debug("adjust_vent_settings>thermostat_cool_diff=${thermostat_cool_diff}, temp_cool_diff_at_sensor=${temp_cool_diff_at_sensor}, reduction factor ${((thermostat_cool_diff - temp_cool_diff_at_sensor) * 20.0).toInteger()}")
                   }
-                    log.info("Temperature in ${roomName} is ${tempAtRoomSensor}. Thermostat detected as cooling with setpoint ${targetCoolRoomTemp} not yet reached by ${temp_cool_diff_at_sensor} degrees. Setting switchLevel to ${switchLevel}")
+                    log.info("adjust_vent_settings>Temperature in ${roomName} is ${tempAtRoomSensor}. Thermostat detected as cooling with setpoint ${targetCoolRoomTemp} not yet reached by ${temp_cool_diff_at_sensor} degrees. Setting switchLevel to ${switchLevel}")
                   
              // If the thermostat is heating
             } else if ( (mode =='heat' || mode=='emergency heat' || tStatOperatingState == 'heating' || mode=='auto') && temp_heat_diff_at_sensor > 0.0) {
@@ -846,7 +848,7 @@ private def adjust_vent_settings() {
                   if (detailedNotif) {
                    log.debug("adjust_vent_settings>thermostat_heat_diff=${thermostat_heat_diff}, temp_heat_diff_at_sensor=${temp_heat_diff_at_sensor}, reduction factor ${((thermostat_cool_diff - temp_cool_diff_at_sensor) * 20.0).toInteger()}")
                   }
-                    log.info("Temperature in ${roomName} is ${tempAtRoomSensor}. Thermostat detected as heating with setpoint ${targetHeatRoomTemp} not yet reached by ${temp_heat_diff_at_sensor} degrees. Setting switchLevel to ${switchLevel}")
+                    log.info("adjust_vent_settings>Temperature in ${roomName} is ${tempAtRoomSensor}. Thermostat detected as heating with setpoint ${targetHeatRoomTemp} not yet reached by ${temp_heat_diff_at_sensor} degrees. Setting switchLevel to ${switchLevel}")
 
             // If the thermostat is doing something other than heating or cooling, close the vent
             } else {
@@ -854,7 +856,7 @@ private def adjust_vent_settings() {
  				  desiredRoomTemp = ((targetHeatRoomTemp.toFloat().round(1) + targetCoolRoomTemp.toFloat().round(1))/2).round(1)
 				  switchLevel= (fullyCloseVents) ? 0: MIN_OPEN_LEVEL_IN_ZONE             
 
-                  log.info("Temperature in ${roomName} is ${tempAtRoomSensor}. Thermostat is neither heating nor cooling or the setpoint has been reached.  Setting switchLevel to ${switchLevel} ")
+                  log.info("adjust_vent_settings>Temperature in ${roomName} is ${tempAtRoomSensor}. Thermostat is neither heating nor cooling or the setpoint has been reached.  Setting switchLevel to ${switchLevel} ")
             }
                         
 		} /* end if thermostat */         
@@ -944,7 +946,7 @@ private def setVentSwitchLevel(indiceRoom, ventSwitch, switchLevel=100) {
 		ventSwitch.setLevel(switchLevel)
 		if (roomName) {
 			if (detailedNotif) {        
-				log.info("set ${ventSwitch} at level ${switchLevel} in ${roomName} to reach desired temperature")
+				log.debug("set ${ventSwitch} at level ${switchLevel} in ${roomName} to reach desired temperature")
 			}                
 		}            
 	} catch (e) {
