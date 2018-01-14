@@ -812,14 +812,14 @@ private def adjust_vent_settings() {
              // Thermostat is in fan only mode.  The whole point is to circulate the air throughout the house, so open all vents
              if ( tStatOperatingState == 'fan only' || tStatOperatingState == 'idle') {
 
-                  desiredRoomTemp = ((targetHeatRoomTemp.toFloat().round(1) + targetCoolRoomTemp.toFloat().round(1))/2).round(1)
-				  switchLevel = 100  // Leave vents open to circulate the air
-
+                  desiredRoomTemp = ((targetHeatRoomTemp.toFloat().round(1) + targetCoolRoomTemp.toFloat().round(1))/2).round(1)				
+				  switchLevel = ((fullyCloseVents) ? 0 : MIN_OPEN_LEVEL_IN_ZONE).toInteger()   // Leave vents in minimum configuration.  We may open them later on a per vent basis.
+                  
  				  // No need to be logging if there's nothing interesting going on
                   log.info("adjust_vent_settings>Thermostat in fan or idle mode. Setting switchLevel in ${roomName} to 100")
             }
              // If the thermostat is cooling		
-            else if (  (mode=='cool' ||  tStatOperatingState == 'cooling' || mode=='auto') && temp_cool_diff_at_sensor > 0.0)  {
+            else if (  tStatOperatingState != 'heating' && (mode=='cool' ||  tStatOperatingState == 'cooling' || mode=='auto') && temp_cool_diff_at_sensor > 0.0)  {
                  
                   desiredRoomTemp = targetCoolRoomTemp
                   
@@ -835,7 +835,7 @@ private def adjust_vent_settings() {
                     log.info("adjust_vent_settings>Temperature in ${roomName} is ${tempAtRoomSensor}. Thermostat detected as cooling with setpoint ${targetCoolRoomTemp} not yet reached by ${temp_cool_diff_at_sensor} degrees. Setting switchLevel to ${switchLevel}")
                   
              // If the thermostat is heating
-            } else if ( (mode =='heat' || mode=='emergency heat' || tStatOperatingState == 'heating' || mode=='auto') && temp_heat_diff_at_sensor > 0.0) {
+            } else if ( tStatOperatingState == 'cooling' && (mode =='heat' || mode=='emergency heat' || tStatOperatingState == 'heating' || mode=='auto') && temp_heat_diff_at_sensor > 0.0) {
 
  				   desiredRoomTemp = targetHeatRoomTemp
                    
@@ -865,11 +865,21 @@ private def adjust_vent_settings() {
 		for (int j = 1;(j <= get_MAX_VENTS()); j++)  {
 			key = "ventSwitch${j}$indiceRoom"
 			def ventSwitch = settings[key]
-			def switchOverrideLevel=null                 
+			def switchOverrideLevel=null
+            float tempInVent=getTemperatureInVent(ventSwitch)
+            
 			if (ventSwitch != null) {
 				nbVents++
 				key = "ventLevel${j}$indiceRoom"
 				switchOverrideLevel = settings[key]
+                
+                 if ( tStatOperatingState == 'fan only' ) {
+                    
+                        if ( (temp_cool_diff_at_sensor > 0.0 && tempInVent < desiredRoomTemp) || 
+                             (temp_heat_diff_at_sensor > 0.0 && tempInVent > desiredRoomTemp)) {
+                           switchLevel = 100
+                        }
+                 }
                 
 				if (switchOverrideLevel) {                
 					if (detailedNotif) {
@@ -896,7 +906,7 @@ private def adjust_vent_settings() {
 		switchLevel= MIN_OPEN_LEVEL_IN_ZONE
 		ventSwitchesOnSet=control_vent_switches_in_rooms(switchLevel)		    
 		if (detailedNotif) {
-			send("safeguards on:set all ventSwitches at ${switchLevel}% to avoid closing all of them")
+			log.info("safeguards on:set all ventSwitches at ${switchLevel}% to avoid closing all of them")
 		}
 	}    
 	return ventSwitchesOnSet    
