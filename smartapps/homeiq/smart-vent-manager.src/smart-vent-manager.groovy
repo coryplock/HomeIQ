@@ -231,7 +231,7 @@ def configDisplayPage() {
 						log.warn "ConfigDisplayPage>invalid mode $mode"
 					break                        
 				}                        
-				paragraph " Thermostat mode: $mode\n Thermostate State: $operatingState"
+				paragraph " Thermostat mode: $mode\n Thermostat State: $operatingState"
 				if (coolingSetpoint)  { 
 					paragraph " Cooling Setpoint: ${coolingSetpoint}$scale"
 				}                        
@@ -763,7 +763,7 @@ private def adjust_vent_settings() {
         targetCoolRoomTemp = targetCoolRoomTemp.toFloat().round(1)
 		
         if (detailedNotif) {
-          log.debug("adjust_vent_settings>targetCoolRoomTemp = ${mode}, room ${roomName}, targetCoolRoomTemp=${targetCoolRoomTemp}")
+          log.debug("adjust_vent_settings>thermostat mode = ${mode},targetCoolRoomTemp=${targetCoolRoomTemp}, room ${roomName}, targetCoolRoomTemp=${targetCoolRoomTemp}")
         }
         
         switchLevel =null	// initially set to null for check later
@@ -799,7 +799,6 @@ private def adjust_vent_settings() {
             return ventSwitchesOnSet
         }
 
-         if ((settings.thermostat) && (switchLevel==null)) {                
 
            // Difference between sensor versus setpoint for this particular room
 		   float temp_cool_diff_at_sensor = (tempAtRoomSensor - targetCoolRoomTemp).round(1)
@@ -808,6 +807,8 @@ private def adjust_vent_settings() {
            // Difference between thermostat and thermostat setpoint
            float thermostat_cool_diff =   (currentTempAtTstat - coolingSetpoint).round(1)               
            float thermostat_heat_diff =   (heatingSetpoint - currentTempAtTstat).round(1)                            
+
+         if ((settings.thermostat) && (switchLevel==null)) {                
                             
              // Thermostat is in fan only mode.  The whole point is to circulate the air throughout the house, so open all vents
              if ( tStatOperatingState == 'fan only' || tStatOperatingState == 'idle') {
@@ -816,7 +817,7 @@ private def adjust_vent_settings() {
 				  switchLevel = ((fullyCloseVents) ? 0 : MIN_OPEN_LEVEL_IN_ZONE).toInteger()   // Leave vents in minimum configuration.  We may open them later on a per vent basis.
                   
  				  // No need to be logging if there's nothing interesting going on
-                  log.info("adjust_vent_settings>Thermostat in fan or idle mode. Setting switchLevel in ${roomName} to 100")
+                  //log.info("adjust_vent_settings>Thermostat in fan or idle mode. Setting switchLevel in ${roomName} to 100")
             }
              // If the thermostat is cooling		
             else if (  tStatOperatingState != 'heating' && (mode=='cool' ||  tStatOperatingState == 'cooling' || mode=='auto') && temp_cool_diff_at_sensor > 0.0)  {
@@ -835,7 +836,7 @@ private def adjust_vent_settings() {
                     log.info("adjust_vent_settings>Temperature in ${roomName} is ${tempAtRoomSensor}. Thermostat detected as cooling with setpoint ${targetCoolRoomTemp} not yet reached by ${temp_cool_diff_at_sensor} degrees. Setting switchLevel to ${switchLevel}")
                   
              // If the thermostat is heating
-            } else if ( tStatOperatingState == 'cooling' && (mode =='heat' || mode=='emergency heat' || tStatOperatingState == 'heating' || mode=='auto') && temp_heat_diff_at_sensor > 0.0) {
+            } else if ( tStatOperatingState != 'cooling' && (mode =='heat' || mode=='emergency heat' || tStatOperatingState == 'heating' || mode=='auto') && temp_heat_diff_at_sensor > 0.0) {
 
  				   desiredRoomTemp = targetHeatRoomTemp
                    
@@ -866,20 +867,24 @@ private def adjust_vent_settings() {
 			key = "ventSwitch${j}$indiceRoom"
 			def ventSwitch = settings[key]
 			def switchOverrideLevel=null
-            float tempInVent=getTemperatureInVent(ventSwitch)
             
 			if (ventSwitch != null) {
+                float tempInVent=getTemperatureInVent(ventSwitch)
 				nbVents++
 				key = "ventLevel${j}$indiceRoom"
 				switchOverrideLevel = settings[key]
                 
                  if ( tStatOperatingState == 'fan only' ) {
-                    
+                                   // Difference between sensor versus setpoint for this particular room
                         if ( (temp_cool_diff_at_sensor > 0.0 && tempInVent < desiredRoomTemp) || 
                              (temp_heat_diff_at_sensor > 0.0 && tempInVent > desiredRoomTemp)) {
                            switchLevel = 100
-                        }
+                        }                        
+                        
+                    log.debug("adjust_vent_settings>temp_cool_diff_at_sensor=${temp_cool_diff_at_sensor}, temp_heat_diff_at_sensor=${temp_heat_diff_at_sensor}")
+                    log.debug("adjust_vent_settings>Thermostat operating state is 'fan only'. Temperature in ${roomName} is ${tempAtRoomSensor}. Temp at ${ventSwitch} is ${tempInVent}.  Desired room temp is ${desiredRoomTemp}. switchLevel set to ${switchLevel}")
                  }
+                 
                 
 				if (switchOverrideLevel) {                
 					if (detailedNotif) {
@@ -924,7 +929,7 @@ private def getTemperatureInVent(ventSwitch) {
 	try {
 		temp = ventSwitch.currentValue("temperature")       
 	} catch (any) {
-		log.debug("getTemperatureInVent>Not able to current Temperature from ${ventSwitch}")
+		log.debug("getTemperatureInVent>Not able to retreive current Temperature from ${ventSwitch}")
 	}    
 	return temp    
 }
